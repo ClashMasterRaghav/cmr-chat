@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Chat App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Form -->
+    <div class="login-container" id="login-form">
+        <div class="login-box">
+            <h2>Welcome to Chat</h2>
+            <form onsubmit="return false;">
+                <div class="profile-pic-group">
+                    <input type="file" id="profile-pic" class="hidden-file-input" accept="image/*">
+                    <label for="profile-pic" class="profile-pic-container">
+                        <div class="profile-pic-preview" id="profile-pic-preview">
+                            <i class="fas fa-camera"></i>
+                            <span id="profile-pic-label">Choose Profile Picture</span>
+                        </div>
+                    </label>
+                    <small class="file-hint">Optional - Max size: 5MB</small>
+                </div>
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button id="login-button">
+                    <span>Login</span>
+                    <i class="fas fa-sign-in-alt"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container" id="chat-container" style="display: none;">
+        <div class="chat-header">
+            <h1><i class="fas fa-comment-dots"></i> Firebase Chat</h1>
+            <div class="user-info">
+                <div id="current-username">Anonymous</div>
+                <button id="logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-content">
+            <!-- Chat Sidebar -->
+            <div class="chat-sidebar">
+                <div class="chat-options">
+                    <button class="chat-option active" data-chat="general" id="general-chat-btn">
+                        <i class="fas fa-users"></i>
+                        <span>General Chat</span>
+                    </button>
+                    <div class="online-users-header">
+                        <h3>Online Users</h3>
+                        <small>Click to start private chat</small>
+                    </div>
+                    <div class="online-users-list" id="online-users-list">
+                        <!-- Online users will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Main Area -->
+            <div class="chat-main">
+                <div class="current-chat-info" id="current-chat-info">
+                    <!-- Current chat information will be displayed here -->
+                </div>
+
+                <!-- Loading indicator -->
+                <div id="loading-indicator" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Loading messages...</p>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be displayed here -->
+                </div>
+
+                <!-- Typing indicator -->
+                <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <div class="chat-input">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Type your message... (Shift+Enter for new line)" 
+                        rows="1"
+                    ></textarea>
+                    <button id="send-button">
+                        <span>Send</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

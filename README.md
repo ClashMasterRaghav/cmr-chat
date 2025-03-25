@@ -72,7 +72,7 @@ Feel free to test the application using these credentials:
 
 1. Clone the repository
 ```bash
-git clone https://github.com/YourUsername/cmr-chat.git
+git clone https://github.com/ClashMasterRaghav/cmr-chat.git
 cd cmr-chat
 ```
 

@@ -92,14 +92,3 @@ python app.py
 
 This application is deployed on [Render](https://render.com/), a cloud platform for web services.
 
-## Contributing
-
-Feel free to fork the repository and submit pull requests for any improvements.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-For any queries or suggestions, please open an issue in the repository.

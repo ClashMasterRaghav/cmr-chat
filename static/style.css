@@ -958,3 +958,91 @@ body {
     50% { opacity: 1; }
     100% { opacity: 0.5; }
 }
+
+/* Modern Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.modal-content {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 32px 24px 20px 24px;
+    min-width: 300px;
+    max-width: 90vw;
+    text-align: center;
+    position: relative;
+    animation: popIn 0.2s;
+}
+@keyframes popIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #4a6fa5;
+}
+.modal-body {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1rem;
+}
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.modal-actions button {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: #4a6fa5;
+    color: #fff;
+    transition: background 0.2s;
+}
+.modal-actions button.cancel {
+    background: #e0e0e0;
+    color: #333;
+}
+.modal-actions button:hover:not(.cancel) {
+    background: #3d5d8a;
+}
+
+/* Toast/Snackbar Styles */
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%);
+    background: #323232;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 24px;
+    font-size: 1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    z-index: 1100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+.toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    bottom: 60px;
+}

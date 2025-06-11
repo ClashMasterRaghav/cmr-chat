@@ -44,47 +44,6 @@ let typingTimeout = null;
 let lastReadTimestamp = null;
 let unreadCount = 0;
 
-// --- Modern Modal and Toast Logic ---
-function showModal({ title = '', body = '', actions = [] }) {
-    const modal = document.getElementById('action-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
-    const modalActions = modal.querySelector('.modal-actions');
-    modalTitle.textContent = title;
-    if (typeof body === 'string') {
-        modalBody.innerHTML = body;
-    } else {
-        modalBody.innerHTML = '';
-        modalBody.appendChild(body);
-    }
-    modalActions.innerHTML = '';
-    actions.forEach(({ text, className = '', onClick }) => {
-        const btn = document.createElement('button');
-        btn.textContent = text;
-        if (className) btn.className = className;
-        btn.onclick = (e) => {
-            e.preventDefault();
-            modal.style.display = 'none';
-            onClick && onClick();
-        };
-        modalActions.appendChild(btn);
-    });
-    modal.style.display = 'flex';
-}
-function hideModal() {
-    document.getElementById('action-modal').style.display = 'none';
-}
-function showToast(message, duration = 2000) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.style.display = 'block';
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => { toast.style.display = 'none'; }, 300);
-    }, duration);
-}
-
 // Function to play notification sound
 function playNotificationSound() {
     const audio = new Audio();
@@ -184,62 +143,26 @@ function addMessage(data, isHistory = false) {
             switch(action) {
                 case 'edit':
                     if (isCurrentUser) {
-                        // Modern modal for editing
-                        const input = document.createElement('textarea');
-                        input.value = data.message;
-                        input.style.width = '100%';
-                        input.rows = 3;
-                        showModal({
-                            title: 'Edit Message',
-                            body: input,
-                            actions: [
-                                {
-                                    text: 'Save',
-                                    onClick: () => {
-                                        const newMessage = input.value.trim();
-                                        if (newMessage && newMessage !== data.message) {
-                                            socket.emit('edit_message', {
-                                                originalMessage: data.message,
-                                                newMessage: newMessage,
-                                                timestamp: data.timestamp,
-                                                username: currentUser.displayName
-                                            });
-                                            contentElement.textContent = newMessage;
-                                            data.message = newMessage;
-                                            showToast('Message edited');
-                                        }
-                                    }
-                                },
-                                {
-                                    text: 'Cancel',
-                                    className: 'cancel',
-                                    onClick: () => {}
-                                }
-                            ]
-                        });
+                        const newMessage = prompt('Edit your message:', data.message);
+                        if (newMessage && newMessage !== data.message) {
+                            // Emit edit event to server
+                            socket.emit('edit_message', {
+                                originalMessage: data.message,
+                                newMessage: newMessage,
+                                timestamp: data.timestamp,
+                                username: currentUser.displayName
+                            });
+                            
+                            // Update UI
+                            contentElement.textContent = newMessage;
+                            data.message = newMessage; // Update the data object
+                        }
                     }
                     break;
                 case 'delete':
-                    if (isCurrentUser) {
-                        showModal({
-                            title: 'Delete Message',
-                            body: 'Are you sure you want to delete this message?',
-                            actions: [
-                                {
-                                    text: 'Delete',
-                                    onClick: () => {
-                                        messageElement.remove();
-                                        // TODO: emit delete event to server if needed
-                                        showToast('Message deleted');
-                                    }
-                                },
-                                {
-                                    text: 'Cancel',
-                                    className: 'cancel',
-                                    onClick: () => {}
-                                }
-                            ]
-                        });
+                    if (isCurrentUser && confirm('Are you sure you want to delete this message?')) {
+                        messageElement.remove();
+                        // Here you would typically emit a socket event to delete the message
                     }
                     break;
                 case 'reply':
@@ -247,8 +170,7 @@ function addMessage(data, isHistory = false) {
                     messageInput.focus();
                     break;
                 case 'react':
-                    // Modern toast for reactions (or emoji picker in future)
-                    showToast('Reactions coming soon! 😊');
+                    alert('Reaction feature coming soon!');
                     break;
             }
         });

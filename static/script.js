@@ -44,6 +44,47 @@ let typingTimeout = null;
 let lastReadTimestamp = null;
 let unreadCount = 0;
 
+// --- Modern Modal and Toast Logic ---
+function showModal({ title = '', body = '', actions = [] }) {
+    const modal = document.getElementById('action-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+    const modalActions = modal.querySelector('.modal-actions');
+    modalTitle.textContent = title;
+    if (typeof body === 'string') {
+        modalBody.innerHTML = body;
+    } else {
+        modalBody.innerHTML = '';
+        modalBody.appendChild(body);
+    }
+    modalActions.innerHTML = '';
+    actions.forEach(({ text, className = '', onClick }) => {
+        const btn = document.createElement('button');
+        btn.textContent = text;
+        if (className) btn.className = className;
+        btn.onclick = (e) => {
+            e.preventDefault();
+            modal.style.display = 'none';
+            onClick && onClick();
+        };
+        modalActions.appendChild(btn);
+    });
+    modal.style.display = 'flex';
+}
+function hideModal() {
+    document.getElementById('action-modal').style.display = 'none';
+}
+function showToast(message, duration = 2000) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.display = 'block';
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+    }, duration);
+}
+
 // Function to play notification sound
 function playNotificationSound() {
     const audio = new Audio();
@@ -143,26 +184,62 @@ function addMessage(data, isHistory = false) {
             switch(action) {
                 case 'edit':
                     if (isCurrentUser) {
-                        const newMessage = prompt('Edit your message:', data.message);
-                        if (newMessage && newMessage !== data.message) {
-                            // Emit edit event to server
-                            socket.emit('edit_message', {
-                                originalMessage: data.message,
-                                newMessage: newMessage,
-                                timestamp: data.timestamp,
-                                username: currentUser.displayName
-                            });
-                            
-                            // Update UI
-                            contentElement.textContent = newMessage;
-                            data.message = newMessage; // Update the data object
-                        }
+                        // Modern modal for editing
+                        const input = document.createElement('textarea');
+                        input.value = data.message;
+                        input.className = 'modal-edit-textarea';
+                        showModal({
+                            title: 'Edit Message',
+                            body: input,
+                            actions: [
+                                {
+                                    text: 'Save',
+                                    onClick: () => {
+                                        const newMessage = input.value.trim();
+                                        if (newMessage && newMessage !== data.message) {
+                                            socket.emit('edit_message', {
+                                                originalMessage: data.message,
+                                                newMessage: newMessage,
+                                                timestamp: data.timestamp,
+                                                username: currentUser.displayName
+                                            });
+                                            contentElement.textContent = newMessage;
+                                            data.message = newMessage;
+                                            showToast('Message edited');
+                                        }
+                                    }
+                                },
+                                {
+                                    text: 'Cancel',
+                                    className: 'cancel',
+                                    onClick: () => {}
+                                }
+                            ]
+                        });
+                        setTimeout(() => { input.focus(); }, 100);
                     }
                     break;
                 case 'delete':
-                    if (isCurrentUser && confirm('Are you sure you want to delete this message?')) {
-                        messageElement.remove();
-                        // Here you would typically emit a socket event to delete the message
+                    if (isCurrentUser) {
+                        showModal({
+                            title: 'Delete Message',
+                            body: 'Are you sure you want to delete this message?',
+                            actions: [
+                                {
+                                    text: 'Delete',
+                                    onClick: () => {
+                                        messageElement.remove();
+                                        // TODO: emit delete event to server if needed
+                                        showToast('Message deleted');
+                                    }
+                                },
+                                {
+                                    text: 'Cancel',
+                                    className: 'cancel',
+                                    onClick: () => {}
+                                }
+                            ]
+                        });
                     }
                     break;
                 case 'reply':
@@ -170,7 +247,8 @@ function addMessage(data, isHistory = false) {
                     messageInput.focus();
                     break;
                 case 'react':
-                    alert('Reaction feature coming soon!');
+                    // Modern toast for reactions (or emoji picker in future)
+                    showToast('Reactions coming soon! 😊');
                     break;
             }
         });
@@ -360,12 +438,28 @@ async function handleLogin() {
             
         } catch (error) {
             console.error("Error signing in:", error);
-            alert("Error signing in: " + error.message);
+            let userMessage = error.message;
+            if (userMessage && userMessage.includes('INVALID_LOGIN_CREDENTIALS')) {
+                userMessage = 'Invalid username or password. Please try again.';
+            }
+            showModal({
+                title: 'Login Error',
+                body: userMessage,
+                actions: [
+                    { text: 'OK', onClick: () => {} }
+                ]
+            });
             loginButton.disabled = false;
             loginButton.innerHTML = '<span>Login</span><i class="fas fa-sign-in-alt"></i>';
         }
     } else {
-        alert("Please enter both username and password");
+        showModal({
+            title: 'Invalid Credentials',
+            body: 'Please enter both username and password',
+            actions: [
+                { text: 'OK', onClick: () => {} }
+            ]
+        });
     }
 }
 
@@ -394,46 +488,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
         logoutButton.addEventListener('click', function() {
-            // Confirm logout
-            if (confirm('Are you sure you want to logout?')) {
-                // Show loading state
-                logoutButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                
-                // Sign out from Firebase
-                auth.signOut()
-                    .then(() => {
-                        // Smooth transition
-                        chatContainer.style.opacity = '0';
-                        
-                        setTimeout(() => {
-                            // Hide chat and show login form
-                            chatContainer.style.display = 'none';
-                            loginForm.style.display = 'flex';
-                            loginForm.style.opacity = '0';
-                            
-                            setTimeout(() => {
-                                loginForm.style.opacity = '1';
-                                loginForm.style.transition = 'opacity 0.3s ease';
-                            }, 10);
-                            
-                            // Clear chat messages
-                            chatMessages.innerHTML = '';
-                            
-                            // Reset login button
-                            loginButton.innerHTML = '<span>Login</span><i class="fas fa-sign-in-alt"></i>';
-                            loginButton.disabled = false;
-                            
-                            console.log("User signed out");
-                        }, 300);
-                    })
-                    .catch((error) => {
-                        // Reset logout button
-                        logoutButton.innerHTML = '<i class="fas fa-sign-out-alt"></i><span>Logout</span>';
-                        
-                        console.error("Error signing out:", error);
-                        alert("Error signing out: " + error.message);
-                    });
-            }
+            // Modern modal for logout confirmation
+            showModal({
+                title: 'Logout',
+                body: 'Are you sure you want to logout?',
+                actions: [
+                    {
+                        text: 'Logout',
+                        onClick: () => {
+                            // Show loading state
+                            logoutButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                            // Sign out from Firebase
+                            auth.signOut()
+                                .then(() => {
+                                    // Smooth transition
+                                    chatContainer.style.opacity = '0';
+                                    setTimeout(() => {
+                                        chatContainer.style.display = 'none';
+                                        loginForm.style.display = 'flex';
+                                        loginForm.style.opacity = '0';
+                                        setTimeout(() => {
+                                            loginForm.style.opacity = '1';
+                                            loginForm.style.transition = 'opacity 0.3s ease';
+                                        }, 10);
+                                        chatMessages.innerHTML = '';
+                                        loginButton.innerHTML = '<span>Login</span><i class="fas fa-sign-in-alt"></i>';
+                                        loginButton.disabled = false;
+                                        console.log("User signed out");
+                                    }, 300);
+                                })
+                                .catch((error) => {
+                                    logoutButton.innerHTML = '<i class="fas fa-sign-out-alt"></i><span>Logout</span>';
+                                    console.error("Error signing out:", error);
+                                    showModal({
+                                        title: 'Logout Error',
+                                        body: error.message,
+                                        actions: [
+                                            { text: 'OK', onClick: () => {} }
+                                        ]
+                                    });
+                                });
+                        }
+                    },
+                    {
+                        text: 'Cancel',
+                        className: 'cancel',
+                        onClick: () => {}
+                    }
+                ]
+            });
         });
     }
 });
